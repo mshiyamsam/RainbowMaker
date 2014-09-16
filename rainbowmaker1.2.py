@@ -1,4 +1,3 @@
-
 from Tkinter import *
 import threading
 
@@ -28,6 +27,7 @@ class App:
         self.tester                 = 0
         self.filesToClose           = []
         self.hashList               = []
+        self.caseInsensitiveWords   = []
         
         self.listCombinations	                = [
                                                     ":", "::", "-", "=", "#", "@", "%", "&", "&", "^",
@@ -364,6 +364,7 @@ class App:
         self.newString = self.text_string.get()
         if len(self.newString) > 0:
             self.listbox_strings.insert(END, self.newString)
+            self.checkAllCase(self.newString)
             self.text_string.delete(0, END)
         else:
             self.editStatus("Cannot add an empty string", 1)
@@ -422,6 +423,33 @@ class App:
             
         except:
             self.editStatus('Error! file does not exist', 1)
+
+
+
+    ## Implementation of case insensitive search
+
+    def checkAllCase(self, newString):
+        combinations = 1 << len(newString)
+        
+        for i in range(0, combinations):
+            buff = newString
+            for j in range (0, len(newString)):
+                if((i & 1<<j) != 0):         
+                    caseComb = newString[j:j+1]
+                    caseComb = caseComb.upper()
+                    
+                    firstPart = buff[0:j]
+                    lastPart = buff[j+1:]
+                    buff = firstPart + caseComb + lastPart
+
+            #print(buff)    possible combination of case permutation
+
+            self.caseInsensitiveWords.append(buff);
+            
+            #self.listbox_strings.insert(END, buff)
+            #self.text_string.delete(0, END)
+
+
 
 
 
@@ -595,6 +623,9 @@ class App:
                                             countSpecialSeparator = countSpecialSeparator + 1
                                             tmpList = self.getListOfStringtoHash(currentStr, otherStr, mySeparator, mySpecialSeparator,
                                                                                  countStr, countOtherStr, countSeparator, countSpecialSeparator)
+
+                                            tmpList = tmpList + self.caseInsensitiveWords
+                                            
                                             for myString in tmpList:
                                                 if (self.stopThread == 1):
                                                     self.stopping()
