@@ -4,6 +4,7 @@ import threading
 import tkFileDialog, ttk, tkFont, tkMessageBox
 import os, base64, time, string
 import hashlib
+import timeit
 #import paramiko
 #from datetime import datetime
 
@@ -29,6 +30,10 @@ class App:
         self.hashList               = []
         self.caseInsensitiveWords   = []
         self.caseOtherWords         = []
+
+        self.startTime              = None
+        self.stopTime               = None
+        self.totalRunTime           = None
         
         self.listCombinations	                = [
                                                     ":", "::", "-", "=", "#", "@", "%", "&", "&", "^",
@@ -459,6 +464,8 @@ class App:
 
     ## first function called by the Run button
     def executeRun(self):
+        self.startTime = timeit.default_timer()
+        print(self.startTime)
         self.stopThread = 0
         if ( self.xMode.get() == 1):
             if (self.isAutoSelect.get() == 1):
@@ -852,7 +859,9 @@ class App:
             return 0
         
         elif (status == 1):
-            self.editStatus("Cracked! combination found:  " + msg +" ["+ myHash + "]", 1)
+            self.stopTime = timeit.default_timer()
+            self.totalRunTime = self.stopTime - self.startTime
+            self.editStatus("Cracked! combination found:  " + msg +" ["+ myHash + "]\n" + "Run Time: " + str(self.totalRunTime) , 1)
             self.fileMenu.entryconfig(0, state=NORMAL)
             return 1
         
