@@ -28,6 +28,7 @@ class App:
         self.filesToClose           = []
         self.hashList               = []
         self.caseInsensitiveWords   = []
+        self.caseOtherWords         = []
         
         self.listCombinations	                = [
                                                     ":", "::", "-", "=", "#", "@", "%", "&", "&", "^",
@@ -364,7 +365,6 @@ class App:
         self.newString = self.text_string.get()
         if len(self.newString) > 0:
             self.listbox_strings.insert(END, self.newString)
-            self.checkAllCase(self.newString)
             self.text_string.delete(0, END)
         else:
             self.editStatus("Cannot add an empty string", 1)
@@ -423,32 +423,6 @@ class App:
             
         except:
             self.editStatus('Error! file does not exist', 1)
-
-
-
-    ## Implementation of case insensitive search
-
-    def checkAllCase(self, newString):
-        combinations = 1 << len(newString)
-        
-        for i in range(0, combinations):
-            buff = newString
-            for j in range (0, len(newString)):
-                if((i & 1<<j) != 0):         
-                    caseComb = newString[j:j+1]
-                    caseComb = caseComb.upper()
-                    
-                    firstPart = buff[0:j]
-                    lastPart = buff[j+1:]
-                    buff = firstPart + caseComb + lastPart
-
-            #print(buff)    possible combination of case permutation
-
-            self.caseInsensitiveWords.append(buff);
-            
-            #self.listbox_strings.insert(END, buff)
-            #self.text_string.delete(0, END)
-
 
 
 
@@ -595,79 +569,88 @@ class App:
                 self.editStatus('Error opening file', 1)
                 
         if (self.stopThread == 0):
-            for currentStr in self.listOfStrings:
-                countStr = countStr + 1
-                countOtherStr = 0
-                if (self.stopThread == 0):
-                    self.editStatus("Running... Please hold!", 1)
-                z = z + 1         
-                self.value = self.total * z
-                if (self.stopThread == 0):
-                    self.progressThread = threading.Thread(target=self.updateProgressBar, args=())
-                    try:
-                        self.progressThread.start()
-                    except Exception as e:
-                        self.editStatus(str(e), 1)
-
-                    # run on list of string
+            
+            for strOrg in self.listOfStrings:
+                self.caseInsensitiveWords.append(strOrg.lower())
+                self.caseInsensitiveWords.append(strOrg.upper())
+                self.caseInsensitiveWords.append(strOrg.capitalize())
+                for currentStr in self.caseInsensitiveWords:
+                    countStr = countStr + 1
+                    countOtherStr = 0
                     if (self.stopThread == 0):
-                        for otherStr in self.listOfStrings:
-                            countOtherStr = countOtherStr + 1
-                            countSeparator = 0
-                            if (self.stopThread == 0):
-                                for mySeparator in self.listCombinations:
-                                    countSeparator = countSeparator + 1
-                                    countSpecialSeparator = 0
-                                    if (self.stopThread == 0):
-                                        for mySpecialSeparator in self.listSpecialConbination:
-                                            countSpecialSeparator = countSpecialSeparator + 1
-                                            tmpList = self.getListOfStringtoHash(currentStr, otherStr, mySeparator, mySpecialSeparator,
-                                                                                 countStr, countOtherStr, countSeparator, countSpecialSeparator)
+                        self.editStatus("Running... Please hold!", 1)
+                    z = z + 1         
+                    self.value = self.total * z
+                    if (self.stopThread == 0):
+                        self.progressThread = threading.Thread(target=self.updateProgressBar, args=())
+                        try:
+                            self.progressThread.start()
+                        except Exception as e:
+                            self.editStatus(str(e), 1)
 
-                                            tmpList = tmpList + self.caseInsensitiveWords
-                                            
-                                            for myString in tmpList:
-                                                if (self.stopThread == 1):
-                                                    self.stopping()
-                                                
-                                                elif (type(myString) != type('~Sp3c1al#!HASH!#5tr1n9~')):
-                                                    pass
-                                                
-                                                else:
-                                                    if (myHash == "md5"):
-                                                        hashValue = hashlib.md5(myString).hexdigest()
-                                                    elif (myHash == "sha1"):
-                                                        hashValue = hashlib.sha1(myString).hexdigest()
-                                                    elif (myHash == "sha224"):
-                                                        hashValue = hashlib.sha224(myString).hexdigest()
-                                                    elif (myHash == "sha256"):
-                                                        hashValue = hashlib.sha256(myString).hexdigest()
-                                                    elif (myHash == "sha384"):
-                                                        hashValue = hashlib.sha384(myString).hexdigest()
-                                                    elif (myHash == "sha512"):
-                                                        hashValue = hashlib.sha512(myString).hexdigest()
-                                                    else:
-                                                        self.editStatus("Error! no such algorithm??? [" + myHash + "]", 1)
-                                                        return 0
+                        # run on list of string
+                        if (self.stopThread == 0):
+                            for otherStrOrg in self.listOfStrings:
+                                self.caseOtherWords.append(otherStrOrg.lower())
+                                self.caseOtherWords.append(otherStrOrg.upper())
+                                self.caseOtherWords.append(otherStrOrg.capitalize())
+                                for otherStr in self.caseOtherWords:
+                                    countOtherStr = countOtherStr + 1
+                                    countSeparator = 0
+                                    if (self.stopThread == 0):
+                                        for mySeparator in self.listCombinations:
+                                            countSeparator = countSeparator + 1
+                                            countSpecialSeparator = 0
+                                            if (self.stopThread == 0):
+                                                for mySpecialSeparator in self.listSpecialConbination:
+                                                    countSpecialSeparator = countSpecialSeparator + 1
+                                                    tmpList = self.getListOfStringtoHash(currentStr, otherStr, mySeparator, mySpecialSeparator,
+                                                                                         countStr, countOtherStr, countSeparator, countSpecialSeparator)
+
+                                                    #tmpList = tmpList + self.caseInsensitiveWords
                                                     
-                                                    if (self.xMode.get() == 1):
-                                                        if (hashValue == toMatch):
-                                                            self.finito(myString, myHash, 1)
-                                                            return 1
-                                                    else:
-                                                        try:
-                                                            file = open(self.rainbowFile, 'a')
-                                                            file.write(myString + '\t' + hashValue + '\t' + myHash + '\n')
-                                                        except:
-                                                            self.editStatus('Error! file does not exist...', 1)
+                                                    for myString in tmpList:
+                                                        if (self.stopThread == 1):
+                                                            self.stopping()
+                                                        
+                                                        elif (type(myString) != type('~Sp3c1al#!HASH!#5tr1n9~')):
+                                                            pass
+                                                        
+                                                        else:
+                                                            if (myHash == "md5"):
+                                                                hashValue = hashlib.md5(myString).hexdigest()
+                                                            elif (myHash == "sha1"):
+                                                                hashValue = hashlib.sha1(myString).hexdigest()
+                                                            elif (myHash == "sha224"):
+                                                                hashValue = hashlib.sha224(myString).hexdigest()
+                                                            elif (myHash == "sha256"):
+                                                                hashValue = hashlib.sha256(myString).hexdigest()
+                                                            elif (myHash == "sha384"):
+                                                                hashValue = hashlib.sha384(myString).hexdigest()
+                                                            elif (myHash == "sha512"):
+                                                                hashValue = hashlib.sha512(myString).hexdigest()
+                                                            else:
+                                                                self.editStatus("Error! no such algorithm??? [" + myHash + "]", 1)
+                                                                return 0
+                                                            
+                                                            if (self.xMode.get() == 1):
+                                                                if (hashValue == toMatch):
+                                                                    self.finito(myString, myHash, 1)
+                                                                    return 1
+                                                            else:
+                                                                try:
+                                                                    file = open(self.rainbowFile, 'a')
+                                                                    file.write(myString + '\t' + hashValue + '\t' + myHash + '\n')
+                                                                except:
+                                                                    self.editStatus('Error! file does not exist...', 1)
+                                            else:
+                                              self.stopping()  
                                     else:
-                                      self.stopping()  
-                            else:
-                                self.stopping()
-                    else:
+                                        self.stopping()
+                        else:
+                            self.stopping()
+                    else: #stopThread == 1
                         self.stopping()
-                else: #stopThread == 1
-                    self.stopping()
 
             try:
                 file.close()
